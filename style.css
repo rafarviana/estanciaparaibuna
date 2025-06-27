@@ -53,16 +53,16 @@ h1 {
 }
 
 h2, h3 {
-    color: var(--accent-color);
     text-align: center;
     margin-bottom: 20px;
 }
 
+/* Modificação para a cor laranja dos títulos H2 e remoção da sombra */
 h2 {
     font-size: 2em;
     margin-top: 40px; /* Mantém a margem superior para o espaçamento entre seções */
-    color: white;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    color: var(--primary-color); /* Alterado para laranja */
+    text-shadow: none; /* Removido a sombra */
     /* Estilo para fixar o título da seção no topo */
     position: sticky;
     /* top será ajustado via JavaScript para ser dinâmico */
@@ -75,6 +75,7 @@ h2 {
 }
 
 h3 {
+    color: var(--accent-color); /* Mantido azul para H3 */
     font-size: 1.5em;
 }
 
@@ -172,10 +173,7 @@ section {
     padding-top: 5px; 
     padding-bottom: 5px; 
 }
-.filters-section h2 {
-    color: white;
-    /* margin-top: 20px;  Ajuste para não ficar muito grudado no header - já está no H2 geral */
-}
+/* Removido o color: white; daqui para usar a cor definida em h2 */
 
 
 .filters-content {
@@ -234,9 +232,8 @@ section {
     /* Isso é ajustado via JS para ser dinâmico */
     scroll-margin-top: var(--header-height, 0px); /* Fallback para 0px */
 }
-.ads-section h2 {
-    color: white;
-}
+/* Removido o color: white; daqui para usar a cor definida em h2 */
+
 
 /* Estilo para a mensagem do filtro */
 #filter-message {
@@ -461,7 +458,9 @@ footer a:hover {
         font-size: 0.9em; /* Smaller font */
     }
 
-    .social-buttons img { width: 25px; height: 25px; }
+    /* Aumentar o tamanho dos botões de redes sociais em telas pequenas */
+    .social-buttons img { width: 35px; height: 35px; } 
+
     .whatsapp-footer-button { padding: 8px 12px; font-size: 0.9em; }
     .whatsapp-footer-button img { width: 20px; height: 20px; }
 }

@@ -159,7 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function startAutoScroll() {
             clearInterval(intervalId);
-            intervalId = setInterval(nextSlide, scrollSpeed);
+            // Só inicia o auto-scroll se houver mais de um item original
+            if (carouselItemsOriginal.length > 1) {
+                intervalId = setInterval(nextSlide, scrollSpeed);
+            }
         }
 
         carouselTrack.parentElement.addEventListener('mouseenter', () => clearInterval(intervalId));
@@ -236,14 +239,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function initializeMiniCarouselSlides() {
             miniCarouselTrack.innerHTML = ''; 
-            miniCarouselSlidesOriginal.forEach(item => miniCarouselTrack.appendChild(item.cloneNode(true)));
-
-            if (miniCarouselSlidesOriginal.length > 0) {
+            // Só adiciona clones se houver mais de uma imagem
+            if (miniCarouselSlidesOriginal.length > 1) {
+                miniCarouselSlidesOriginal.forEach(item => miniCarouselTrack.appendChild(item.cloneNode(true)));
                 const numClonesMini = miniCarouselSlidesOriginal.length * 3;
                 for (let i = 0; i < numClonesMini; i++) {
                     const clone = miniCarouselSlidesOriginal[i % miniCarouselSlidesOriginal.length].cloneNode(true);
                     miniCarouselTrack.appendChild(clone);
                 }
+            } else {
+                // Se for apenas 1 imagem, adiciona apenas o original
+                miniCarouselSlidesOriginal.forEach(item => miniCarouselTrack.appendChild(item.cloneNode(true)));
             }
         }
 
@@ -252,6 +258,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let allMiniCarouselSlides = Array.from(miniCarouselTrack.children);
 
         function updateMiniCarousel(smooth = true) {
+            // Se houver apenas uma imagem, não faz transição e mantém no lugar
+            if (miniCarouselSlidesOriginal.length <= 1) {
+                miniCarouselTrack.style.transition = 'none';
+                miniCarouselTrack.style.transform = `translateX(0px)`;
+                return; // Sai da função
+            }
+
             const slideFullWidthToTranslate = (allMiniCarouselSlides.length > 0) ? (allMiniCarouselSlides[0].offsetWidth + miniItemGap) : 0;
             
             miniCarouselTrack.style.transition = smooth ? `transform 0.5s ease-in-out` : `none`;
@@ -289,11 +302,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function startMiniAutoScroll() {
             clearInterval(miniIntervalId);
-            miniIntervalId = setInterval(nextMiniSlide, miniScrollSpeed);
+            // Só inicia o auto-scroll se houver mais de uma imagem original
+            if (miniCarouselSlidesOriginal.length > 1) {
+                miniIntervalId = setInterval(nextMiniSlide, miniScrollSpeed);
+            }
         }
 
         // --- Touch Event Listeners for Mini-Carousels ---
         miniCarouselTrack.addEventListener('touchstart', (e) => {
+            // Só permite arrastar se houver mais de uma imagem
+            if (miniCarouselSlidesOriginal.length <= 1) return;
             miniIsDragging = true;
             miniStartX = e.touches[0].clientX;
             miniCarouselTrack.style.transition = 'none';
@@ -301,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         miniCarouselTrack.addEventListener('touchmove', (e) => {
-            if (!miniIsDragging) return;
+            if (!miniIsDragging || miniCarouselSlidesOriginal.length <= 1) return;
             miniCurrentX = e.touches[0].clientX;
             const diff = miniCurrentX - miniStartX;
             const slideFullWidthToTranslate = (allMiniCarouselSlides.length > 0) ? (allMiniCarouselSlides[0].offsetWidth + miniItemGap) : 0;
@@ -309,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         miniCarouselTrack.addEventListener('touchend', () => {
+            if (miniCarouselSlidesOriginal.length <= 1) return; // Sai se for apenas 1 imagem
             miniIsDragging = false;
             const diff = miniCurrentX - miniStartX;
             if (Math.abs(diff) > miniSwipeThreshold) {
@@ -347,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "hospedagem": "Hospedagem",
         "loja": "Loja",
         "lazer": "Lazer",
-        "Pousadas": "Pousadas" // Exemplo de como adicionar um nome amigável para "Pousadas"
+        "pousadas": "Pousadas" // Exemplo de como adicionar um nome amigável para "Pousadas"
     };
 
     function getFriendlyName(key) {

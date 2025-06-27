@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let message = "";
 
         // Só mostra a mensagem se pelo menos um filtro estiver ativo ou se não houver resultados
-        if (selectedBairro !== 'todos' || selectedServico !== 'todos') {
+        if (selectedBairro !== 'todos' || selectedServico !== 'todos' || count === 0) { // Modificação aqui: Adicionado 'count === 0'
             // Usar getFriendlyName para exibir nomes bonitos na mensagem
             let bairroText = (selectedBairro !== 'todos') ? getFriendlyName(selectedBairro) : "";
             let servicoText = (selectedServico !== 'todos') ? getFriendlyName(selectedServico) : "";
@@ -477,11 +477,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (count === 0) {
                 message = "Não encontramos nenhum parceiro com os filtros selecionados.";
             } else if (selectedBairro !== 'todos' && selectedServico === 'todos') {
-                message = `Aqui estão nossos parceiros no **${bairroText}**.`;
+                message = `Aqui estão nossos parceiros no **${bairroText}**: **${count}** encontrado(s).`; // Modificado
             } else if (selectedBairro === 'todos' && selectedServico !== 'todos') {
-                message = `Aqui estão nossos parceiros para **${servicoText}**.`;
+                message = `Aqui estão nossos parceiros para **${servicoText}**: **${count}** encontrado(s).`; // Modificado
             } else { // Ambos os filtros estão ativos e há resultados
-                message = `Aqui estão nossos parceiros para **${servicoText}** no **${bairroText}**.`;
+                message = `Aqui estão nossos parceiros para **${servicoText}** no **${bairroText}**: **${count}** encontrado(s).`; // Modificado
             }
         }
         

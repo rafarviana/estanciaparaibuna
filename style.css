@@ -1,7 +1,7 @@
 /* Variáveis para cores */
 :root {
-    --primary-color: #FF6F00;
-    --secondary-color: #00C853;
+    --primary-color: #FF6F00; /* Mantém laranja para o header/footer */
+    --secondary-color: #00C853; /* Este já é um verde, podemos usá-lo */
     --accent-color: #3F51B5;
     --text-color: #333;
     --gradient-blue-start: #007bff;
@@ -17,6 +17,10 @@
 
     /* Nova variável para a cor da mensagem de filtro - Agora PRETO */
     --filter-message-color: #000000; /* Preto puro */
+
+    /* Nova variável para a cor dos botões principais - VERDE */
+    --main-button-color: #00C853; /* Usando o verde de --secondary-color */
+    --main-button-hover-color: #00963F; /* Um verde um pouco mais escuro para o hover */
 }
 
 body {
@@ -132,7 +136,7 @@ section {
 /* Estilo para o botão "Mais Informações" (já laranja) */
 .more-info-btn {
     display: inline-block;
-    background-color: var(--primary-color); /* Usa o laranja do título */
+    background-color: var(--main-button-color); /* Usa o verde */
     color: white;
     padding: 10px 20px;
     border-radius: 5px;
@@ -145,13 +149,13 @@ section {
 }
 
 .more-info-btn:hover {
-    background-color: #d65c00; /* Um tom um pouco mais escuro ao passar o mouse */
+    background-color: var(--main-button-hover-color); /* Um tom um pouco mais escuro ao passar o mouse */
 }
 
 /* Estilo para o botão "Como Chegar" - AGORA LARANJA */
 .how-to-get-btn {
     display: inline-block;
-    background-color: var(--primary-color); /* Usando o laranja principal */
+    background-color: var(--main-button-color); /* Usando o verde principal */
     color: white;
     padding: 10px 20px;
     border-radius: 5px;
@@ -164,7 +168,7 @@ section {
 }
 
 .how-to-get-btn:hover {
-    background-color: #d65c00; /* Um tom um pouco mais escuro ao passar o mouse */
+    background-color: var(--main-button-hover-color); /* Um tom um pouco mais escuro ao passar o mouse */
 }
 
 .filters-section {
@@ -211,7 +215,7 @@ section {
 
 /* Estilo para o botão de limpar filtro - AGORA LARANJA */
 .clear-filter-btn {
-    background-color: var(--primary-color); /* Usando o laranja principal */
+    background-color: var(--main-button-color); /* Usando o verde principal */
     color: white;
     padding: 10px 20px;
     border: none;
@@ -223,7 +227,7 @@ section {
 }
 
 .clear-filter-btn:hover {
-    background-color: #d65c00; /* Um tom um pouco mais escuro ao passar o mouse */
+    background-color: var(--main-button-hover-color); /* Um tom um pouco mais escuro ao passar o mouse */
 }
 
 .ads-section {

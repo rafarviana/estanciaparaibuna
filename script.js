@@ -3,20 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Garante que a página sempre comece do topo
     window.scrollTo(0, 0);
 
-    // Arrays para popular os filtros (pode ser expandido conforme necessário)
-    const allBairros = {
-        "todos": "Todos os Bairros", 
-        "centro": "Centro",
-        "vila-niteroi": "Vila Niterói",
-        "comerciarios": "Comerciários"
-    };
-    const allServicos = {
-        "todos": "Todos os Serviços", 
-        "restaurante": "Restaurante",
-        "hospedagem": "Hospedagem",
-        "loja": "Loja",
-        "lazer": "Lazer"
-    };
+    // REMOVIDOS OS ARRAYS allBairros e allServicos daqui, pois serão populados dinamicamente
 
     // Referência ao elemento da mensagem
     const filterMessageElement = document.getElementById('filter-message');
@@ -24,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainHeader = document.getElementById('main-header'); // Referência ao cabeçalho principal
 
     // Flag para controlar se a rolagem já ocorreu na carga inicial
-    let hasScrolledOnLoad = false;
+    let hasScrolledOnLoad = false; // Esta variável não é mais usada neste contexto, mas mantida caso outras partes do código a usem.
 
     // Função para ajustar o 'top' dos títulos de seção dinamicamente
     function adjustSectionTitlePosition() {
@@ -349,16 +336,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearFilterBtn = document.getElementById('clear-filter-btn'); 
     const adItems = document.querySelectorAll('.ad-item');
 
+    // Mapeamento de chaves para nomes amigáveis (pode ser expandido conforme necessário)
+    // Se um 'data-bairro' ou 'data-servico' não estiver aqui, ele será exibido como está no HTML.
+    const friendlyNames = {
+        "campo redondo": "Campo Redondo",
+        "vila-niteroi": "Vila Niterói",
+        "centro": "Centro",
+        "comerciarios": "Comerciários",
+        "restaurante": "Restaurante",
+        "hospedagem": "Hospedagem",
+        "loja": "Loja",
+        "lazer": "Lazer",
+        "Pousadas": "Pousadas" // Exemplo de como adicionar um nome amigável para "Pousadas"
+    };
+
+    function getFriendlyName(key) {
+        // Retorna o nome amigável se existir, senão formata a chave
+        if (friendlyNames[key]) {
+            return friendlyNames[key];
+        }
+        // Converte kebab-case ou snake_case para Title Case e substitui hífens/underscores por espaços
+        return key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+
     function populateFilters() {
         const availableBairros = new Set();
         const availableServicos = new Set();
 
         adItems.forEach(item => {
             if (item.dataset.bairro) {
-                availableBairros.add(item.dataset.bairro);
+                // Normaliza para lowercase antes de adicionar ao Set
+                availableBairros.add(item.dataset.bairro.toLowerCase()); 
             }
             if (item.dataset.servico) {
-                availableServicos.add(item.dataset.servico);
+                // Normaliza para lowercase antes de adicionar ao Set
+                availableServicos.add(item.dataset.servico.toLowerCase()); 
             }
         });
 
@@ -368,41 +380,39 @@ document.addEventListener('DOMContentLoaded', () => {
         optionAllBairro.value = "todos";
         optionAllBairro.textContent = "Todos os Bairros";
         bairroFilter.appendChild(optionAllBairro); 
-        for (const key in allBairros) {
-            if (key !== "todos") { 
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = allBairros[key]; 
-                bairroFilter.appendChild(option);
-            }
-        }
+        // Converte o Set para Array, ordena alfabeticamente e adiciona as opções
+        Array.from(availableBairros).sort().forEach(bairroKey => {
+            const option = document.createElement('option');
+            option.value = bairroKey;
+            option.textContent = getFriendlyName(bairroKey); 
+            bairroFilter.appendChild(option);
+        });
         
-
         // Limpa e popula o filtro de serviços
         servicoFilter.innerHTML = ''; 
         const optionAllServico = document.createElement('option');
         optionAllServico.value = "todos";
         optionAllServico.textContent = "Todos os Serviços";
         servicoFilter.appendChild(optionAllServico); 
-        for (const key in allServicos) {
-            if (key !== "todos") { 
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = allServicos[key]; 
-                servicoFilter.appendChild(option);
-            }
-        }
+        // Converte o Set para Array, ordena alfabeticamente e adiciona as opções
+        Array.from(availableServicos).sort().forEach(servicoKey => {
+            const option = document.createElement('option');
+            option.value = servicoKey;
+            option.textContent = getFriendlyName(servicoKey); 
+            servicoFilter.appendChild(option);
+        });
     }
 
 
-    function applyFilters(event, isInitialLoad = false) { // Adicionado 'isInitialLoad'
+    function applyFilters(event, isInitialLoad = false) { 
         const selectedBairro = bairroFilter.value;
         const selectedServico = servicoFilter.value;
         let visibleCount = 0;
 
         adItems.forEach(item => {
-            const itemBairro = item.dataset.bairro;
-            const itemServico = item.dataset.servico;
+            // Normaliza os valores do dataset para minúsculas para comparação
+            const itemBairro = item.dataset.bairro ? item.dataset.bairro.toLowerCase() : '';
+            const itemServico = item.dataset.servico ? item.dataset.servico.toLowerCase() : '';
 
             const matchesBairro = (selectedBairro === 'todos' || selectedBairro === itemBairro);
             const matchesServico = (selectedServico === 'todos' || selectedServico === itemServico);
@@ -416,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Atualiza a mensagem do filtro
-        updateFilterMessage(selectedBairro, selectedServico, visibleCount); // Alterado 'count' para 'visibleCount'
+        updateFilterMessage(selectedBairro, selectedServico, visibleCount); 
 
         // Rolagem suave para a seção de anúncios SE NÃO for a carga inicial
         // e SE houver resultados ou algum filtro estiver ativo.
@@ -429,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 adsSectionRect.right <= (window.innerWidth || document.documentElement.clientWidth)
             );
 
+            // Rola para a seção de anúncios apenas se ela não estiver visível na tela
             if (!isAdsSectionVisible) {
                  adsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
@@ -440,8 +451,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Só mostra a mensagem se pelo menos um filtro estiver ativo ou se não houver resultados
         if (selectedBairro !== 'todos' || selectedServico !== 'todos') {
-            let bairroText = allBairros[selectedBairro] || "";
-            let servicoText = allServicos[selectedServico] || "";
+            // Usar getFriendlyName para exibir nomes bonitos na mensagem
+            let bairroText = (selectedBairro !== 'todos') ? getFriendlyName(selectedBairro) : "";
+            let servicoText = (selectedServico !== 'todos') ? getFriendlyName(selectedServico) : "";
 
             if (count === 0) {
                 message = "Não encontramos nenhum parceiro com os filtros selecionados.";

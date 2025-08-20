@@ -1,71 +1,89 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Rola a página para o topo imediatamente após o DOM ser carregado
-    // Garante que a página sempre comece do topo
     window.scrollTo(0, 0);
 
-    // REMOVIDOS OS ARRAYS allBairros e allServicos daqui, pois serão populados dinamicamente
-
-    // Referência ao elemento da mensagem
+    // --- Referências de Elementos ---
+    const mainHeader = document.getElementById('main-header');
+    const menuToggle = document.getElementById('menu-toggle');
+    const mainNav = document.getElementById('main-nav');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const adsSection = document.getElementById('ads-section');
     const filterMessageElement = document.getElementById('filter-message');
-    const adsSection = document.getElementById('ads-section'); // Referência à seção de anúncios
-    const mainHeader = document.getElementById('main-header'); // Referência ao cabeçalho principal
+    const bairroFilter = document.getElementById('bairro-filter');
+    const servicoFilter = document.getElementById('servico-filter');
+    const clearFilterBtn = document.getElementById('clear-filter-btn');
 
-    // Flag para controlar se a rolagem já ocorreu na carga inicial
-    let hasScrolledOnLoad = false; // Esta variável não é mais usada neste contexto, mas mantida caso outras partes do código a usem.
+    // --- Lógica do Menu Hambúrguer ---
+    menuToggle.addEventListener('click', () => {
+        menuToggle.classList.toggle('active');
+        mainNav.classList.toggle('active');
+    });
 
-    // Função para ajustar o 'top' dos títulos de seção dinamicamente
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            // Fecha o menu ao clicar em um link
+            menuToggle.classList.remove('active');
+            mainNav.classList.remove('active');
+        });
+    });
+
+    // --- Ajusta a posição do título e `scroll-padding-top` ---
     function adjustSectionTitlePosition() {
-        const sectionTitles = document.querySelectorAll('h2'); 
-        
-        if (mainHeader && sectionTitles.length > 0) {
-            const headerHeight = mainHeader.offsetHeight; 
-            sectionTitles.forEach(h2 => {
-                h2.style.top = `${headerHeight}px`; 
-            });
-            // Define a variável CSS customizada para scroll-padding-top
-            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+        if (mainHeader) {
+            const headerHeight = mainHeader.offsetHeight;
+            document.documentElement.style.setProperty('--header-height', `${headerHeight + 2}px`);
         }
     }
 
     adjustSectionTitlePosition();
     window.addEventListener('resize', adjustSectionTitlePosition);
 
-    // --- Shuffle Array Function (Para randomizar o carrossel de destaques) ---
+    // --- Função para Embaralhar Arrays ---
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]]; // ES6 swap
+            [array[i], array[j]] = [array[j], array[i]];
         }
     }
 
-    function setupCarousel(carouselId) {
+    // --- Função Principal para Carrossel ---
+    function setupCarousel(carouselId, initialItems = []) {
         const carouselTrack = document.getElementById(`${carouselId}-track`);
-        if (!carouselTrack) return; // Adicionado null check
-        // Armazena os itens originais APENAS na primeira vez que a função é chamada
-        if (!carouselTrack._originalItems) { 
-            carouselTrack._originalItems = Array.from(carouselTrack.children);
+        if (!carouselTrack) return;
+        
+        let carouselItemsOriginal = initialItems.map(item => createCarouselItem(item));
+        if (carouselId === 'destaques') {
+            shuffleArray(carouselItemsOriginal);
         }
-        let carouselItemsOriginal = carouselTrack._originalItems;
+
         let currentIndex = 0;
         let intervalId;
         const scrollSpeed = 3000;
-        const itemGap = 10; 
-
-        // --- Touch/Swipe Variables ---
+        const itemGap = 10;
+        
+        // --- Lógica de Touch/Swipe ---
         let startX = 0;
         let currentX = 0;
         let isDragging = false;
-        const swipeThreshold = 50; // Pixels para acionar um swipe
+        const swipeThreshold = 50;
+
+        function createCarouselItem(data) {
+            const item = document.createElement('div');
+            item.classList.add('carousel-item');
+            item.innerHTML = `
+                <img src="${data.imageSrc}" alt="${data.title}">
+                <h3>${data.title}</h3>
+                <p>${data.description}</p>
+                ${data.link ? `<a href="${data.link}" target="_blank" class="more-info-btn">Mais Informações</a>` : ''}
+                ${data.howToGetLink ? `<a href="${data.howToGetLink}" target="_blank" class="how-to-get-btn">Como Chegar</a>` : ''}
+            `;
+            return item;
+        }
 
         function initializeCarouselItems() {
-            carouselTrack.innerHTML = ''; // Limpa o track antes de adicionar os itens
-            
+            carouselTrack.innerHTML = '';
             if (carouselItemsOriginal.length > 0) {
-                // Adiciona os itens originais primeiro
                 carouselItemsOriginal.forEach(item => carouselTrack.appendChild(item.cloneNode(true)));
-                
-                // Adiciona clones para loop infinito
-                const numItemsToClone = carouselItemsOriginal.length * 3; 
+                const numItemsToClone = carouselItemsOriginal.length * 3;
                 for (let i = 0; i < numItemsToClone; i++) {
                     const clone = carouselItemsOriginal[i % carouselItemsOriginal.length].cloneNode(true);
                     carouselTrack.appendChild(clone);
@@ -73,10 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (carouselId === 'destaques') { // Apenas embaralha o carrossel 'destaques'
-            // Embaralha os itens originais antes de cloná-los para a inicialização
-            shuffleArray(carouselTrack._originalItems);
-        }
         initializeCarouselItems();
         let allCarouselItems = Array.from(carouselTrack.children);
 
@@ -85,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const carouselContainer = carouselTrack.parentElement;
             const containerWidth = carouselContainer.clientWidth;
             
-            // Determine itemsPerView based on current window width
             if (window.innerWidth >= 2560) {
                 itemsPerView = 5;
             } else if (window.innerWidth >= 1440) {
@@ -94,72 +107,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemsPerView = 3;
             } else if (window.innerWidth >= 768) {
                 itemsPerView = 2;
-            } else { // For smaller screens including 320px to 424px
+            } else {
                 itemsPerView = 1;
             }
 
-            // NOVO CÁLCULO PARA itemWidthCalc
             let itemWidthCalc;
             if (itemsPerView === 1) {
-                // Para 1 item por vez, o item deve ter a largura total do container
-                // O padding interno do item já é tratado pelo box-sizing: border-box;
                 itemWidthCalc = `100%`;
             } else {
-                // Calcula a largura para múltiplos itens, considerando os gaps
                 const totalGapWidthForItems = itemGap * (itemsPerView - 1);
                 const availableWidthForItems = containerWidth - totalGapWidthForItems;
                 const individualItemWidth = availableWidthForItems / itemsPerView;
-                // Não subtrai o padding aqui, pois o box-sizing: border-box; já o inclui
-                itemWidthCalc = `${individualItemWidth}px`; 
+                itemWidthCalc = `${individualItemWidth}px`;
             }
             
             allCarouselItems.forEach(item => {
                 item.style.minWidth = itemWidthCalc;
-                item.style.maxWidth = itemWidthCalc; // Adicionado para garantir que não exceda
-                item.style.flexBasis = itemWidthCalc; // Adicionado para melhor controle em flexbox
+                item.style.maxWidth = itemWidthCalc;
+                item.style.flexBasis = itemWidthCalc;
             });
 
-            // Recalculate slideFullWidthToTranslate to ensure accuracy
-            // Usar offsetWidth do primeiro item (que já terá a largura ajustada pelo CSS via JS)
             const slideFullWidthToTranslate = (allCarouselItems.length > 0) ? (allCarouselItems[0].offsetWidth + itemGap) : 0;
             
             carouselTrack.style.transition = smooth ? `transform 0.5s ease-in-out` : `none`;
             carouselTrack.style.transform = `translateX(-${currentIndex * slideFullWidthToTranslate}px)`;
 
-            const totalOriginalItems = carouselTrack._originalItems.length; // Usa os itens originais armazenados
-            // Reset do carrossel para o início sem transição quando atinge o final dos itens originais
+            const totalOriginalItems = carouselItemsOriginal.length;
             if (currentIndex >= totalOriginalItems) {
                 setTimeout(() => {
                     carouselTrack.style.transition = 'none';
-                    currentIndex = 0; 
+                    currentIndex = 0;
                     carouselTrack.style.transform = `translateX(0px)`;
-                    carouselTrack.offsetWidth; // Força o reflow para aplicar a transição 'none'
-                    carouselTrack.style.transition = `transform 0.5s ease-in-out`; // Retorna a transição
-                }, smooth ? 500 : 0); 
-            } else if (currentIndex < 0) { // Lida com o retrocesso além do início
+                    carouselTrack.offsetWidth;
+                    carouselTrack.style.transition = `transform 0.5s ease-in-out`;
+                }, smooth ? 500 : 0);
+            } else if (currentIndex < 0) {
                 setTimeout(() => {
                     carouselTrack.style.transition = 'none';
-                    currentIndex = totalOriginalItems - 1; // Vai para a posição do último item original
+                    currentIndex = totalOriginalItems - 1;
                     carouselTrack.style.transform = `translateX(-${currentIndex * slideFullWidthToTranslate}px)`;
-                    carouselTrack.offsetWidth; // Força o reflow
+                    carouselTrack.offsetWidth;
                     carouselTrack.style.transition = 'transform 0.5s ease-in-out';
                 }, smooth ? 500 : 0);
             }
         }
 
         function nextSlide() {
-            currentIndex++; 
-            updateCarousel(); 
+            currentIndex++;
+            updateCarousel();
         }
 
-        function prevSlide() { // Nova função para retroceder
+        function prevSlide() {
             currentIndex--;
             updateCarousel();
         }
 
         function startAutoScroll() {
             clearInterval(intervalId);
-            // Só inicia o auto-scroll se houver mais de um item original
             if (carouselItemsOriginal.length > 1) {
                 intervalId = setInterval(nextSlide, scrollSpeed);
             }
@@ -168,12 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
         carouselTrack.parentElement.addEventListener('mouseenter', () => clearInterval(intervalId));
         carouselTrack.parentElement.addEventListener('mouseleave', startAutoScroll);
 
-        // --- Touch Event Listeners ---
         carouselTrack.addEventListener('touchstart', (e) => {
             isDragging = true;
             startX = e.touches[0].clientX;
-            carouselTrack.style.transition = 'none'; // Desabilita a transição durante o arrasto
-            clearInterval(intervalId); // Para o auto-scroll
+            carouselTrack.style.transition = 'none';
+            clearInterval(intervalId);
         });
 
         carouselTrack.addEventListener('touchmove', (e) => {
@@ -181,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
             currentX = e.touches[0].clientX;
             const diff = currentX - startX;
             const slideFullWidthToTranslate = (allCarouselItems.length > 0) ? (allCarouselItems[0].offsetWidth + itemGap) : 0;
-            // Aplica o arrasto visual imediato
             carouselTrack.style.transform = `translateX(${diff - (currentIndex * slideFullWidthToTranslate)}px)`;
         });
 
@@ -189,57 +191,51 @@ document.addEventListener('DOMContentLoaded', () => {
             isDragging = false;
             const diff = currentX - startX;
             if (Math.abs(diff) > swipeThreshold) {
-                if (diff < 0) { // Deslizou para a esquerda
+                if (diff < 0) {
                     nextSlide();
-                } else { // Deslizou para a direita
+                } else {
                     prevSlide();
                 }
             } else {
-                // Se não for um deslizamento significativo, volta para o item atual
-                updateCarousel(); // Reaplica a transformação correta com transição suave
+                updateCarousel();
             }
-            startAutoScroll(); // Retoma o auto-scroll
-        });
-
-        window.addEventListener('resize', () => {
-            clearInterval(intervalId); 
-            initializeCarouselItems(); // Recreate DOM elements
-            allCarouselItems = Array.from(carouselTrack.children); // Update allCarouselItems
-            currentIndex = 0; // Reset index
-            updateCarousel(false); // Update position without animation
             startAutoScroll();
         });
 
-        // Inicialização do carrossel
-        currentIndex = 0; 
-        carouselTrack.style.transform = `translateX(0px)`; 
-        updateCarousel(false); // Chama com smooth=false para evitar transição na carga inicial
+        window.addEventListener('resize', () => {
+            clearInterval(intervalId);
+            initializeCarouselItems();
+            allCarouselItems = Array.from(carouselTrack.children);
+            currentIndex = 0;
+            updateCarousel(false);
+            startAutoScroll();
+        });
+
+        currentIndex = 0;
+        carouselTrack.style.transform = `translateX(0px)`;
+        updateCarousel(false);
         startAutoScroll();
     }
 
-    setupCarousel('destaques');
-    setupCarousel('pontos-turisticos');
-
-    // --- Lógica para Mini-Carrosséis dentro dos Anúncios com Rolagem Automática em Loop Infinito ---
-    document.querySelectorAll('.ad-item').forEach(adItem => {
+    // --- Função para Mini-Carrosséis ---
+    function setupMiniCarousel(adItem) {
         const miniCarouselTrack = adItem.querySelector('.mini-carousel-track');
-        if (!miniCarouselTrack) return; 
-
+        if (!miniCarouselTrack) return;
+        
         let miniCarouselSlidesOriginal = Array.from(miniCarouselTrack.children);
         let currentMiniIndex = 0;
         let miniIntervalId;
         const miniScrollSpeed = 2500;
         const miniItemGap = 3;
-
-        // --- Touch/Swipe Variables for Mini-Carousels ---
+        
+        // --- Lógica de Touch/Swipe para Mini-Carrosséis ---
         let miniStartX = 0;
         let miniCurrentX = 0;
         let miniIsDragging = false;
-        const miniSwipeThreshold = 30; // Limiar menor para carrosséis menores
-
+        const miniSwipeThreshold = 30;
+        
         function initializeMiniCarouselSlides() {
-            miniCarouselTrack.innerHTML = ''; 
-            // Só adiciona clones se houver mais de uma imagem
+            miniCarouselTrack.innerHTML = '';
             if (miniCarouselSlidesOriginal.length > 1) {
                 miniCarouselSlidesOriginal.forEach(item => miniCarouselTrack.appendChild(item.cloneNode(true)));
                 const numClonesMini = miniCarouselSlidesOriginal.length * 3;
@@ -248,38 +244,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     miniCarouselTrack.appendChild(clone);
                 }
             } else {
-                // Se for apenas 1 imagem, adiciona apenas o original
                 miniCarouselSlidesOriginal.forEach(item => miniCarouselTrack.appendChild(item.cloneNode(true)));
             }
         }
-
-        initializeMiniCarouselSlides(); 
-
+        
+        initializeMiniCarouselSlides();
         let allMiniCarouselSlides = Array.from(miniCarouselTrack.children);
-
+        
         function updateMiniCarousel(smooth = true) {
-            // Se houver apenas uma imagem, não faz transição e mantém no lugar
             if (miniCarouselSlidesOriginal.length <= 1) {
                 miniCarouselTrack.style.transition = 'none';
                 miniCarouselTrack.style.transform = `translateX(0px)`;
-                return; // Sai da função
+                return;
             }
-
-            const slideFullWidthToTranslate = (allMiniCarouselSlides.length > 0) ? (allMiniCarouselSlides[0].offsetWidth + miniItemGap) : 0;
             
+            const slideFullWidthToTranslate = (allMiniCarouselSlides.length > 0) ? (allMiniCarouselSlides[0].offsetWidth + miniItemGap) : 0;
             miniCarouselTrack.style.transition = smooth ? `transform 0.5s ease-in-out` : `none`;
             miniCarouselTrack.style.transform = `translateX(-${currentMiniIndex * slideFullWidthToTranslate}px)`;
-
+            
             const totalOriginalMiniSlides = miniCarouselSlidesOriginal.length;
             if (currentMiniIndex >= totalOriginalMiniSlides) {
                 setTimeout(() => {
                     miniCarouselTrack.style.transition = 'none';
                     currentMiniIndex = 0;
                     miniCarouselTrack.style.transform = `translateX(0px)`;
-                    miniCarouselTrack.offsetWidth; 
+                    miniCarouselTrack.offsetWidth;
                     miniCarouselTrack.style.transition = 'transform 0.5s ease-in-out';
                 }, smooth ? 500 : 0);
-            } else if (currentMiniIndex < 0) { // Lida com o retrocesso além do início
+            } else if (currentMiniIndex < 0) {
                 setTimeout(() => {
                     miniCarouselTrack.style.transition = 'none';
                     currentMiniIndex = totalOriginalMiniSlides - 1;
@@ -289,28 +281,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, smooth ? 500 : 0);
             }
         }
-
+        
         function nextMiniSlide() {
             currentMiniIndex++;
             updateMiniCarousel();
         }
-
-        function prevMiniSlide() { // Nova função para mini-carrosséis
+        
+        function prevMiniSlide() {
             currentMiniIndex--;
             updateMiniCarousel();
         }
-
+        
         function startMiniAutoScroll() {
             clearInterval(miniIntervalId);
-            // Só inicia o auto-scroll se houver mais de uma imagem original
             if (miniCarouselSlidesOriginal.length > 1) {
                 miniIntervalId = setInterval(nextMiniSlide, miniScrollSpeed);
             }
         }
+        
+        miniCarouselTrack.addEventListener('mouseenter', () => clearInterval(miniIntervalId));
+        miniCarouselTrack.addEventListener('mouseleave', startMiniAutoScroll);
 
-        // --- Touch Event Listeners for Mini-Carousels ---
         miniCarouselTrack.addEventListener('touchstart', (e) => {
-            // Só permite arrastar se houver mais de uma imagem
             if (miniCarouselSlidesOriginal.length <= 1) return;
             miniIsDragging = true;
             miniStartX = e.touches[0].clientX;
@@ -327,13 +319,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         miniCarouselTrack.addEventListener('touchend', () => {
-            if (miniCarouselSlidesOriginal.length <= 1) return; // Sai se for apenas 1 imagem
+            if (miniCarouselSlidesOriginal.length <= 1) return;
             miniIsDragging = false;
             const diff = miniCurrentX - miniStartX;
             if (Math.abs(diff) > miniSwipeThreshold) {
-                if (diff < 0) { // Deslizou para a esquerda
+                if (diff < 0) {
                     nextMiniSlide();
-                } else { // Deslizou para a direita
+                } else {
                     prevMiniSlide();
                 }
             } else {
@@ -342,167 +334,222 @@ document.addEventListener('DOMContentLoaded', () => {
             startMiniAutoScroll();
         });
 
-
-        currentMiniIndex = 0; 
-        miniCarouselTrack.style.transform = `translateX(0px)`; 
-        updateMiniCarousel(false); 
+        currentMiniIndex = 0;
+        miniCarouselTrack.style.transform = `translateX(0px)`;
+        updateMiniCarousel(false);
         startMiniAutoScroll();
-    });
+    }
 
-    // --- Lógica dos Filtros (Popula e aplica) ---
-    const bairroFilter = document.getElementById('bairro-filter');
-    const servicoFilter = document.getElementById('servico-filter');
-    const clearFilterBtn = document.getElementById('clear-filter-btn'); 
-    const adItems = document.querySelectorAll('.ad-item');
-
-    // Mapeamento de chaves para nomes amigáveis (pode ser expandido conforme necessário)
-    // Se um 'data-bairro' ou 'data-servico' não estiver aqui, ele será exibido como está no HTML.
+    // --- Lógica para os Filtros (Popula e aplica) ---
     const friendlyNames = {
         "campo redondo": "Campo Redondo",
-        "vila-niteroi": "Vila Niterói",
+        "vila-amelia": "Vila Amélia",
         "centro": "Centro",
         "comerciarios": "Comerciários",
         "restaurante": "Restaurante",
         "hospedagem": "Hospedagem",
         "loja": "Loja",
         "lazer": "Lazer",
-        "pousadas": "Pousadas" // Exemplo de como adicionar um nome amigável para "Pousadas"
+        "pousadas": "Pousadas"
     };
 
     function getFriendlyName(key) {
-        // Retorna o nome amigável se existir, senão formata a chave
         if (friendlyNames[key]) {
             return friendlyNames[key];
         }
-        // Converte kebab-case ou snake_case para Title Case e substitui hífens/underscores por espaços
         return key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
-    function populateFilters() {
+    // Comentário: Essa função populava os filtros com base no HTML estático.
+    // Agora, ela será modificada para receber dados dinamicamente.
+    function populateFilters(adsData) {
         const availableBairros = new Set();
         const availableServicos = new Set();
-
-        adItems.forEach(item => {
-            if (item.dataset.bairro) {
-                // Normaliza para lowercase antes de adicionar ao Set
-                availableBairros.add(item.dataset.bairro.toLowerCase()); 
+        
+        adsData.forEach(ad => {
+            if (ad.bairro) {
+                availableBairros.add(ad.bairro.toLowerCase());
             }
-            if (item.dataset.servico) {
-                // Normaliza para lowercase antes de adicionar ao Set
-                availableServicos.add(item.dataset.servico.toLowerCase()); 
+            if (ad.servico) {
+                availableServicos.add(ad.servico.toLowerCase());
             }
         });
 
         // Limpa e popula o filtro de bairros
-        bairroFilter.innerHTML = ''; 
-        const optionAllBairro = document.createElement('option');
-        optionAllBairro.value = "todos";
-        optionAllBairro.textContent = "Todos os Bairros";
-        bairroFilter.appendChild(optionAllBairro); 
-        // Converte o Set para Array, ordena alfabeticamente e adiciona as opções
+        bairroFilter.innerHTML = `<option value="todos">Todos os Bairros</option>`;
         Array.from(availableBairros).sort().forEach(bairroKey => {
             const option = document.createElement('option');
             option.value = bairroKey;
-            option.textContent = getFriendlyName(bairroKey); 
+            option.textContent = getFriendlyName(bairroKey);
             bairroFilter.appendChild(option);
         });
         
         // Limpa e popula o filtro de serviços
-        servicoFilter.innerHTML = ''; 
-        const optionAllServico = document.createElement('option');
-        optionAllServico.value = "todos";
-        optionAllServico.textContent = "Todos os Serviços";
-        servicoFilter.appendChild(optionAllServico); 
-        // Converte o Set para Array, ordena alfabeticamente e adiciona as opções
+        servicoFilter.innerHTML = `<option value="todos">Todos os Serviços</option>`;
         Array.from(availableServicos).sort().forEach(servicoKey => {
             const option = document.createElement('option');
             option.value = servicoKey;
-            option.textContent = getFriendlyName(servicoKey); 
+            option.textContent = getFriendlyName(servicoKey);
             servicoFilter.appendChild(option);
         });
     }
 
-
-    function applyFilters(event, isInitialLoad = false) { 
-        const selectedBairro = bairroFilter.value;
-        const selectedServico = servicoFilter.value;
+    // Comentário: Esta função agora recebe os dados crus e renderiza o HTML.
+    function renderAds(adsData, selectedBairro = 'todos', selectedServico = 'todos') {
+        const adsGrid = document.querySelector('.ads-grid');
+        adsGrid.innerHTML = '';
         let visibleCount = 0;
 
-        adItems.forEach(item => {
-            // Normaliza os valores do dataset para minúsculas para comparação
-            const itemBairro = item.dataset.bairro ? item.dataset.bairro.toLowerCase() : '';
-            const itemServico = item.dataset.servico ? item.dataset.servico.toLowerCase() : '';
-
-            const matchesBairro = (selectedBairro === 'todos' || selectedBairro === itemBairro);
-            const matchesServico = (selectedServico === 'todos' || selectedServico === itemServico);
-
-            if (matchesBairro && matchesServico) {
-                item.style.display = 'flex';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
+        const filteredAds = adsData.filter(ad => {
+            const matchesBairro = (selectedBairro === 'todos' || selectedBairro === ad.bairro.toLowerCase());
+            const matchesServico = (selectedServico === 'todos' || selectedServico === ad.servico.toLowerCase());
+            return matchesBairro && matchesServico;
         });
 
-        // Atualiza a mensagem do filtro
-        updateFilterMessage(selectedBairro, selectedServico, visibleCount); 
+        filteredAds.forEach(ad => {
+            const adItem = document.createElement('div');
+            adItem.classList.add('ad-item');
+            adItem.dataset.bairro = ad.bairro.toLowerCase();
+            adItem.dataset.servico = ad.servico.toLowerCase();
 
-        // Rolagem suave para a seção de anúncios SE NÃO for a carga inicial
-        // e SE houver resultados ou algum filtro estiver ativo.
-        if (!isInitialLoad && (visibleCount > 0 || selectedBairro !== 'todos' || selectedServico !== 'todos')) {
-            const adsSectionRect = adsSection.getBoundingClientRect();
-            const isAdsSectionVisible = (
-                adsSectionRect.top >= 0 &&
-                adsSectionRect.left >= 0 &&
-                adsSectionRect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                adsSectionRect.right <= (window.innerWidth || document.documentElement.clientWidth)
-            );
-
-            // Rola para a seção de anúncios apenas se ela não estiver visível na tela
-            if (!isAdsSectionVisible) {
-                 adsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            let miniCarouselHtml = '';
+            if (ad.images && ad.images.length > 0) {
+                miniCarouselHtml = `
+                    <div class="mini-carousel-container">
+                        <div class="mini-carousel-track">
+                            ${ad.images.map(imgSrc => `<div class="mini-carousel-slide"><img src="${imgSrc}" alt="${ad.title}"></div>`).join('')}
+                        </div>
+                    </div>
+                `;
             }
-        }
-    }
 
+            let socialButtonsHtml = '';
+            if (ad.social && Object.keys(ad.social).length > 0) {
+                socialButtonsHtml = `
+                    <div class="social-buttons">
+                        ${ad.social.whatsapp ? `<a href="${ad.social.whatsapp}" target="_blank" class="whatsapp-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/1200px-WhatsApp.svg.png" alt="WhatsApp"><span>WhatsApp</span></a>` : ''}
+                        ${ad.social.instagram ? `<a href="${ad.social.instagram}" target="_blank" class="instagram-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/1024px-Instagram_logo_2016.svg.png" alt="Instagram"><span>Instagram</span></a>` : ''}
+                        ${ad.social.googleMaps ? `<a href="${ad.social.googleMaps}" target="_blank" class="googlemaps-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Maps_icon_%282020%29.svg/1200px-Maps_icon_%282020%29.svg.png" alt="Google Maps"><span>Google Maps</span></a>` : ''}
+                    </div>
+                `;
+            }
+
+            adItem.innerHTML = `
+                <h3>${ad.title}</h3>
+                ${miniCarouselHtml}
+                <p>${ad.description}</p>
+                ${socialButtonsHtml}
+            `;
+            adsGrid.appendChild(adItem);
+            visibleCount++;
+        });
+        
+        updateFilterMessage(selectedBairro, selectedServico, count);
+        
+        // Inicializa os mini-carrosséis nos anúncios recém-criados
+        document.querySelectorAll('.ad-item').forEach(setupMiniCarousel);
+    }
+    
     function updateFilterMessage(selectedBairro, selectedServico, count) {
         let message = "";
-
-        // Só mostra a mensagem se pelo menos um filtro estiver ativo ou se não houver resultados
-        if (selectedBairro !== 'todos' || selectedServico !== 'todos' || count === 0) { // Modificação aqui: Adicionado 'count === 0'
-            // Usar getFriendlyName para exibir nomes bonitos na mensagem
+        if (selectedBairro !== 'todos' || selectedServico !== 'todos' || count === 0) {
             let bairroText = (selectedBairro !== 'todos') ? getFriendlyName(selectedBairro) : "";
             let servicoText = (selectedServico !== 'todos') ? getFriendlyName(selectedServico) : "";
 
             if (count === 0) {
                 message = "Não encontramos nenhum parceiro com os filtros selecionados.";
             } else if (selectedBairro !== 'todos' && selectedServico === 'todos') {
-                message = `Aqui estão nossos parceiros no **${bairroText}**: **${count}** encontrado(s).`; // Modificado
+                message = `Aqui estão nossos parceiros no **${bairroText}**: **${count}** encontrado(s).`;
             } else if (selectedBairro === 'todos' && selectedServico !== 'todos') {
-                message = `Aqui estão nossos parceiros para **${servicoText}**: **${count}** encontrado(s).`; // Modificado
-            } else { // Ambos os filtros estão ativos e há resultados
-                message = `Aqui estão nossos parceiros para **${servicoText}** no **${bairroText}**: **${count}** encontrado(s).`; // Modificado
+                message = `Aqui estão nossos parceiros para **${servicoText}**: **${count}** encontrado(s).`;
+            } else {
+                message = `Aqui estão nossos parceiros para **${servicoText}** no **${bairroText}**: **${count}** encontrado(s).`;
             }
         }
-        
-        filterMessageElement.innerHTML = message; 
+        filterMessageElement.innerHTML = message;
     }
 
-    // Função para limpar os filtros
-    function clearFilters() {
+    function applyFilters(adsData, isInitialLoad = false) {
+        const selectedBairro = bairroFilter.value;
+        const selectedServico = servicoFilter.value;
+        
+        renderAds(adsData, selectedBairro, selectedServico);
+
+        if (!isInitialLoad && (selectedBairro !== 'todos' || selectedServico !== 'todos')) {
+            const adsSectionRect = adsSection.getBoundingClientRect();
+            const isAdsSectionVisible = (adsSectionRect.top >= 0 && adsSectionRect.left >= 0 && adsSectionRect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && adsSectionRect.right <= (window.innerWidth || document.documentElement.clientWidth));
+
+            if (!isAdsSectionVisible) {
+                 adsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
+
+    function clearFilters(adsData) {
         bairroFilter.value = 'todos';
         servicoFilter.value = 'todos';
-        applyFilters(); 
+        applyFilters(adsData);
     }
+    
+    // Comentário: Esta é a área crucial para ligar ao seu banco de dados.
+    // Substitua os dados de exemplo abaixo pela chamada à sua API.
+    const getMockData = () => {
+        // Simulação de dados retornados por um banco de dados
+        return {
+            destaques: [
+                { title: "Chalé Aguia", description: "Chalé romantico com vista para as montanhas.", imageSrc: "chaleaguia.jpeg", link: "https://wa.me/5511930080331" },
+                { title: "Deposito Construção Martelo", description: "Tudo para sua obra em paraibuna.", imageSrc: "deposito3.jpeg", link: "https://wa.me/5512912345678" },
+                { title: "Casa de campo", description: "Casa de campo para descanço.", imageSrc: "casa.jpeg", link: "https://wa.me/5512912345678" },
+                { title: "Farmacia Paraibuna", description: "Remedios baratos é aqui.", imageSrc: "farmacia.jpeg", link: "https://wa.me/5512912345678" }
+            ],
+            ads: [
+                { title: "Chalé Aguia", description: "Chalé romantico com vista para as montanhas.", bairro: "Campo Redondo", servico: "Pousadas", images: ["chaleaguia.jpeg", "bar1.jpeg"], social: { whatsapp: "https://wa.me/5511930080331", instagram: "https://instagram.com/renaissance.chales", googleMaps: "https://maps.app.goo.gl/dh6Ki7bWK6wwZjPR6" } },
+                { title: "Pousada Aconchego", description: "Hospedagem confortável e com vista privilegiada.", bairro: "Vila Amélia", servico: "Hospedagem", images: ["bar2.jpg"], social: { whatsapp: "https://wa.me/5512912345678", instagram: "https://instagram.com/seuinstagram", googleMaps: "https://maps.app.goo.gl/seulocalizacao" } },
+                { title: "Loja de Artesanato Local", description: "Produtos artesanais únicos da região. Ótimas lembranças!", bairro: "Centro", servico: "Loja", images: ["https://via.placeholder.com/300x200/8B4513/FFFFFF?text=Loja+1.1", "https://via.placeholder.com/300x200/D2B48C/000000?text=Loja+1.2"], social: { whatsapp: "https://wa.me/5512912345678", instagram: "https://instagram.com/seuinstagram", googleMaps: "https://maps.app.goo.gl/seulocalizacao" } },
+                { title: "Parque de Aventuras", description: "Tirolesa, arvorismo e muita diversão para toda a família!", bairro: "Comerciarios", servico: "Lazer", images: ["img/anuncie_aqui.jpg", "img/anuncie_aqui.jpg"], social: { whatsapp: "https://wa.me/5512912345678", instagram: "https://instagram.com/seuinstagram", googleMaps: "https://maps.app.goo.gl/seulocalizacao" } }
+            ],
+            pontosTuristicos: [
+                { title: "Nome do Ponto Turístico 1", description: "Descrição do ponto turístico e o que ele oferece.", imageSrc: "img/anuncie_aqui.jpg", howToGetLink: "https://maps.app.goo.gl/seulocalizacao" },
+                { title: "Nome do Ponto Turístico 2", description: "Descrição do ponto turístico e o que ele oferece.", imageSrc: "logo.png", howToGetLink: "https://maps.app.goo.gl/seulocalizacao" },
+                { title: "Nome do Ponto Turístico 3", description: "Descrição do ponto turístico e o que ele oferece.", imageSrc: "https://via.placeholder.com/600x400/A0FF33/FFFFFF?text=Ponto+Turistico+3", howToGetLink: "https://maps.app.goo.gl/seulocalizacao" },
+                { title: "Nome do Ponto Turístico 4", description: "Descrição do ponto turístico e o que ele oferece.", imageSrc: "https://via.placeholder.com/600x400/33A0FF/FFFFFF?text=Ponto+Turistico+4", howToGetLink: "https://maps.app.goo.gl/seulocalizacao" }
+            ]
+        };
+    };
 
-    // Inicializa os filtros e aplica-os
-    if (bairroFilter && servicoFilter) {
-        populateFilters(); 
-        bairroFilter.addEventListener('change', applyFilters);
-        servicoFilter.addEventListener('change', applyFilters);
-        clearFilterBtn.addEventListener('click', clearFilters); 
-        
-        // Chama applyFilters na carga inicial, passando 'true' para isInitialLoad
-        applyFilters(null, true); 
-    }
+    // Comentário: Você vai substituir esta função por uma chamada real à sua API.
+    // Exemplo: fetch('https://sua-api.com/data').then(response => response.json()).then(data => { ... });
+    const loadData = async () => {
+        try {
+            // Em produção, use fetch para carregar os dados
+            // const response = await fetch('URL_DA_SUA_API_DE_DADOS');
+            // const data = await response.json();
+            
+            // Usando dados de mock para o exemplo
+            const data = getMockData();
+
+            // Configura os carrosséis com os dados do mock
+            setupCarousel('destaques', data.destaques);
+            setupCarousel('pontos-turisticos', data.pontosTuristicos);
+            
+            // Popula os filtros com os dados de anúncios
+            populateFilters(data.ads);
+            
+            // Renderiza os anúncios com base nos dados do mock
+            renderAds(data.ads);
+            
+            // Adiciona os event listeners com a referência aos dados
+            bairroFilter.addEventListener('change', () => applyFilters(data.ads));
+            servicoFilter.addEventListener('change', () => applyFilters(data.ads));
+            clearFilterBtn.addEventListener('click', () => clearFilters(data.ads));
+
+        } catch (error) {
+            console.error("Falha ao carregar os dados:", error);
+            // Mensagem de erro para o usuário, se necessário
+            filterMessageElement.innerHTML = "Ops! Não foi possível carregar os dados. Tente novamente mais tarde.";
+        }
+    };
+
+    // Inicia o carregamento dos dados
+    loadData();
 });

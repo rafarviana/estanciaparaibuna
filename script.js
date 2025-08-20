@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.getElementById('menu-toggle');
     const mainNav = document.getElementById('main-nav');
     const navLinks = document.querySelectorAll('.nav-link');
+    const searchLink = document.querySelector('.search-link');
+    const filtersSection = document.getElementById('filters-section');
     const adsSection = document.getElementById('ads-section');
     const filterMessageElement = document.getElementById('filter-message');
     const bairroFilter = document.getElementById('bairro-filter');
@@ -25,6 +27,20 @@ document.addEventListener('DOMContentLoaded', () => {
             mainNav.classList.remove('active');
         });
     });
+
+    // --- Lógica do Scroll Suave para a Seção de Pesquisa ---
+    if (searchLink && filtersSection) {
+        searchLink.addEventListener('click', (e) => {
+            e.preventDefault(); // Impede o comportamento padrão do link
+            const headerHeight = mainHeader.offsetHeight;
+            const targetPosition = filtersSection.getBoundingClientRect().top + window.scrollY - headerHeight;
+            
+            window.scrollTo({
+                top: targetPosition,
+                behavior: 'smooth'
+            });
+        });
+    }
 
     // --- Ajusta a posição do título e `scroll-padding-top` ---
     function adjustSectionTitlePosition() {
@@ -444,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
             visibleCount++;
         });
         
-        updateFilterMessage(selectedBairro, selectedServico, count);
+        updateFilterMessage(selectedBairro, selectedServico, filteredAds.length);
         
         // Inicializa os mini-carrosséis nos anúncios recém-criados
         document.querySelectorAll('.ad-item').forEach(setupMiniCarousel);
